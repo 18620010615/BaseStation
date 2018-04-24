@@ -7,9 +7,16 @@
 //
 
 #import "AppDelegate.h"
+#import "ViewController.h"
+#import "BNCoreServices.h"
+#define NAVI_TEST_BUNDLE_ID @"looper.chinaunicom.-22"  //SDK测试bundle ID
+#define NAVI_TEST_APP_KEY   @"AROKW1DRZ6LPyNBb8Pm3jBB1WAyzHOs5"  //SDK测试APP KEY
+#define NAVI_TEST_TTS_APP_ID @"11146830" //SDK测试语言播报 APPID
 
 @interface AppDelegate ()
-
+{
+    BMKMapManager* _mapManager;
+}
 @end
 
 @implementation AppDelegate
@@ -17,6 +24,41 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    // 先启动BaiduMapManager
+    _mapManager = [[BMKMapManager alloc]init];
+    
+    /**
+     *百度地图SDK所有接口均支持百度坐标（BD09）和国测局坐标（GCJ02），用此方法设置您使用的坐标类型.
+     *默认是BD09（BMK_COORDTYPE_BD09LL）坐标.
+     *如果需要使用GCJ02坐标，需要设置CoordinateType为：BMK_COORDTYPE_COMMON.
+     */
+    if ([BMKMapManager setCoordinateTypeUsedInBaiduMapSDK:BMK_COORDTYPE_COMMON]) {
+        NSLog(@"经纬度类型设置成功");
+    } else {
+        NSLog(@"经纬度类型设置失败");
+    }
+    
+    BOOL ret = [_mapManager start:NAVI_TEST_APP_KEY generalDelegate:self];
+    if (!ret) {
+        NSLog(@"manager start failed!");
+    }
+    
+    ViewController *rootVC = [[ViewController alloc] init];
+    
+    UINavigationController *rootNav = [[UINavigationController alloc] initWithRootViewController:rootVC];
+    [rootNav.navigationBar setBackgroundImage:[UIImage imageNamed:@"default_top_bar"] forBarMetrics:UIBarMetricsDefault];
+    
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+    self.window.backgroundColor = [UIColor whiteColor];
+    self.window.rootViewController = rootNav;
+    [self.window makeKeyAndVisible];
+    //初始化导航SDK
+    [BNCoreServices_Instance initServices:NAVI_TEST_APP_KEY];
+    //TTS在线授权
+    [BNCoreServices_Instance setTTSAppId:NAVI_TEST_TTS_APP_ID];
+    //设置是否自动退出导航
+    [BNCoreServices_Instance setAutoExitNavi:NO];
+    [BNCoreServices_Instance startServicesAsyn:nil fail:nil];
     return YES;
 }
 
